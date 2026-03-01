@@ -64,5 +64,7 @@ substitutions:
   _IMAGE: "redbrick-lungreds-test"
   _JOB: "redbrick-lungreds-test"
   _RUNTIME_SA: "redbrick-assistant-redbrick-46@project022.iam.gserviceaccount.com"
+  _INPUT_BUCKET: "lungreds-1st"
+  _OUTPUT_BUCKET: "lungreds-1st"
  
 
