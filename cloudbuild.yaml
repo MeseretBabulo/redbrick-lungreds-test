@@ -1,0 +1,68 @@
+# Cloud Build steps run in order
+
+steps:
+  # 1) Build Docker image from Dockerfile
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA",
+        ".",
+      ]
+
+  # 2) Push image to Artifact Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "push",
+        "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA",
+      ]
+
+  # 3) Create or update Cloud Run Job
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      [
+        "run",
+        "jobs",
+        "deploy",
+        "${_JOB}",
+        "--image",
+        "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA",
+        "--region",
+        "${_REGION}",
+        "--service-account",
+        "${_RUNTIME_SA}",
+        "--set-env-vars",
+        "INPUT_BUCKET=${_INPUT_BUCKET},OUTPUT_BUCKET=${_OUTPUT_BUCKET}",
+      ]
+
+  # 4) Execute Cloud Run Job
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      [
+        "run",
+        "jobs",
+        "execute",
+        "${_JOB}",
+        "--region",
+        "${_REGION}",
+        "--wait",
+      ]
+
+images:
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _REGION: "us-central1"
+  _REPO: "redbrick-lungreds-test"
+  _IMAGE: "redbrick-lungreds-test"
+  _JOB: "redbrick-lungreds-test"
+  _RUNTIME_SA: "redbrick-assistant-redbrick-46@project022.iam.gserviceaccount.com"
+ 
+
